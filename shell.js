@@ -68,9 +68,32 @@ nv.nvBalancer = function(status){
   print('Balancer is ' + balancer_status +' now');
 }
 
+nv.nvPrintChunks = function(){
+  conf = db.getSisterDB("config");
+  
+  var collName = this.getName();
+  var dbName = this.getDB().getName();
+  
+  var chunkSet = {};
+  var shardKey = '';
+  conf.chunks.find({ns:dbName + '.' + collName},{_id:1,min:1,max:1, shard:1}).sort({min:1}).forEach(function(item){
+   if (shardKey === ''){
+     for(var i in item.min){
+       shardKey = i;
+       break;
+     }
+   }
+   if (typeof(chunkSet[item.shard]) === 'undefined'){
+     chunkSet[item.shard] = [];
+   } 
+   chunkSet[item.shard].push([item.min[shardKey], item.max[shardKey]]);
+  });
+  printjson(chunkSet);
+}
 
 
 
 
 nv.extend(DB, 'nvBalancer', nv.nvBalancer, 'nvBalancer([status]) - get or set balancer status, status value is 1 or 0');
+nv.extend(DBCollection, 'nvPrintChunks', nv.nvPrintChunks, 'nvPrintChunks() - Print collection chunk info, include record count, size and speed time');
 
