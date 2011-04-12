@@ -71,8 +71,10 @@ nv.nvBalancer = function(status){
 nv.nvPrintChunks = function(){
   conf = db.getSisterDB("config");
   
-  var collName = this.getName();
-  var dbName = this.getDB().getName();
+  var coll = this;
+  var collName = coll.getName();
+  var dbName = coll.getDB().getName();
+
   
   var chunkSet = {};
   var shardKey = '';
@@ -85,10 +87,32 @@ nv.nvPrintChunks = function(){
    }
    if (typeof(chunkSet[item.shard]) === 'undefined'){
      chunkSet[item.shard] = [];
-   } 
-   chunkSet[item.shard].push([item.min[shardKey], item.max[shardKey]]);
+   }
+   if(typeof(item.min[shardKey]) != "object" && typeof(item.max[shardKey]) != "object"){
+     chunkSet[item.shard].push([item.min[shardKey], item.max[shardKey]]);
+   }
   });
-  printjson(chunkSet);
+  
+  for (var i in chunkSet){
+    var shard = i;
+    var chunks = chunkSet[i];
+    print('Shard:' + shard);
+    print("\tmin\t\t\tmax\t\t\tcount\t\t\ttime");
+    for(var j in chunks){
+      var start = new Date().getTime();
+      var count = 0;
+      var param = {};
+      param[shardKey] = {$gte:chunks[j][0], $lt:chunks[j][1]};
+      try{
+        count = coll.find(param).count();
+      }catch(e){
+        printjson(e)
+      }
+      var speed = (new Date().getTime() - start) / 1000;
+      
+      print("\t" + chunks[j][0] + "\t\t\t" + chunks[j][1] + "\t\t\t" + count + "\t\t\t" + speed + "s");
+    }
+  }
 }
 
 
