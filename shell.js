@@ -244,7 +244,7 @@ nv._moveChunk = function(ns, find, to){
   
   if (typeof(find) == 'object'){
     for(var i = 0; i < find.length; i++){
-      cmd.find[shardKey] = middle[i];
+      cmd.find[shardKey] = find[i];
       printjson(cmd);
       try{
         myadmin.runCommand(cmd);
